@@ -1,110 +1,206 @@
-//Synthetic scale-up for the Scalability section
+// ============================================================
+// Synthetic Scale-Up Generator- Scalability Testing
+// Run AFTER the base HashiCorp graph is loaded
+// Three tiers: ~500, ~1000, ~5000 total nodes
+// All synthetic nodes are schema-compliant (HC-12, HC-13 satisfied)
+// ============================================================
+
+
+// ============================================================
+// ~500 total nodes
+// ============================================================
 
 UNWIND range(1, 100) AS i
-CREATE (o:Organization:IndependentContinuant:OrgDomain {
+CREATE (o:Organization:IndependentContinuant {
   name: 'SyntheticOrg_' + toString(i),
-  type: 'synthetic'
+  type: 'synthetic',
+  stage: 'growth'
 })
-CREATE (p:Product:IndependentContinuant:ProductTech {
+CREATE (p:Product:IndependentContinuant {
   name: 'SyntheticProduct_' + toString(i),
   type: 'synthetic',
   lifecycle_stage: 'growth'
 })
-CREATE (cs:CustomerSegment:IndependentContinuant:MarketCustomer {
+CREATE (cs:CustomerSegment:IndependentContinuant {
   name: 'SyntheticSegment_' + toString(i),
-  size: i * 100
+  size: i * 100,
+  willingness_to_pay: i * 50
 })
-CREATE (a:Assumption:DependentContinuant:RiskIntelligence {
+CREATE (a:Assumption:DependentContinuant {
   statement: 'SyntheticAssumption_' + toString(i),
   assumption_type: CASE (i % 5)
     WHEN 0 THEN 'desirability'
     WHEN 1 THEN 'feasibility'
     WHEN 2 THEN 'viability'
     WHEN 3 THEN 'scalability'
-    ELSE 'sustainability' END,
+    ELSE 'sustainability'
+  END,
   validation_status: CASE (i % 4)
     WHEN 0 THEN 'untested'
     WHEN 1 THEN 'testing'
     WHEN 2 THEN 'validated'
-    ELSE 'invalidated' END,
-  riskiness_score: (i % 10) + 1
+    ELSE 'invalidated'
+  END,
+  riskiness_score: (i % 10) + 1,
+  confidence: (i % 10) + 1
 })
 CREATE (o)-[:OWNS_PRODUCT]->(p)
 CREATE (p)-[:SERVES_SEGMENT]->(cs)
 CREATE (p)-[:HAS_ASSUMPTION]->(a);
 
-// Profile HC-01 at ~500 synthetic nodes
-// (HashiCorp base 121 + 100 orgs * ~4 nodes = ~521 nodes)
-PROFILE
-MATCH (p:Product)
-WHERE NOT (p)-[:SERVES_SEGMENT]->(:CustomerSegment)
-AND NOT (p)-[:VARIANT_OF]->()
-RETURN p.name AS product,
-       'HC-01' AS violation,
-       'Product has no customer segment' AS description;
+// Profile HC-01 
+// CALL db.clearQueryCaches();
 
-CALL db.clearQueryCaches();
-// Scale to 1,000 nodes — run the generator again with a different range
+// Unscoped (visits all Product nodes including synthetic):
+// PROFILE
+// MATCH (p:Product)
+// WHERE NOT (p)-[:SERVES_SEGMENT]->(:CustomerSegment)
+// AND NOT (p)-[:VARIANT_OF]->()
+// RETURN p.name AS product, 'HC-01' AS violation,
+//        'Product has no customer segment' AS description;
+
+// Scoped to HashiCorp products only (demonstrates locality):
+// PROFILE
+// MATCH (p:Product)
+// WHERE p.name IN [
+//   'Terraform', 'Terraform OSS', 'Terraform Cloud',
+//   'Vault', 'Vault OSS', 'Vault Enterprise',
+//   'Consul', 'Nomad'
+// ]
+// AND NOT (p)-[:SERVES_SEGMENT]->(:CustomerSegment)
+// AND NOT (p)-[:VARIANT_OF]->()
+// RETURN p.name AS product, 'HC-01' AS violation,
+//        'Product has no customer segment' AS description;
+
+// ============================================================
+// ~1000 total nodes
+// ============================================================
 
 UNWIND range(101, 250) AS i
-CREATE (o:Organization:IndependentContinuant:OrgDomain {
-  name: 'SyntheticOrg_' + toString(i), type: 'synthetic'
+CREATE (o:Organization:IndependentContinuant {
+  name: 'SyntheticOrg_' + toString(i),
+  type: 'synthetic',
+  stage: 'growth'
 })
-CREATE (p:Product:IndependentContinuant:ProductTech {
+CREATE (p:Product:IndependentContinuant {
   name: 'SyntheticProduct_' + toString(i),
-  type: 'synthetic', lifecycle_stage: 'growth'
+  type: 'synthetic',
+  lifecycle_stage: 'growth'
 })
-CREATE (cs:CustomerSegment:IndependentContinuant:MarketCustomer {
-  name: 'SyntheticSegment_' + toString(i), size: i * 100
+CREATE (cs:CustomerSegment:IndependentContinuant {
+  name: 'SyntheticSegment_' + toString(i),
+  size: i * 100,
+  willingness_to_pay: i * 50
 })
-CREATE (a:Assumption:DependentContinuant:RiskIntelligence {
+CREATE (a:Assumption:DependentContinuant {
   statement: 'SyntheticAssumption_' + toString(i),
   assumption_type: CASE (i % 5)
-    WHEN 0 THEN 'desirability' WHEN 1 THEN 'feasibility'
-    WHEN 2 THEN 'viability'    WHEN 3 THEN 'scalability'
-    ELSE 'sustainability' END,
+    WHEN 0 THEN 'desirability'
+    WHEN 1 THEN 'feasibility'
+    WHEN 2 THEN 'viability'
+    WHEN 3 THEN 'scalability'
+    ELSE 'sustainability'
+  END,
   validation_status: CASE (i % 4)
-    WHEN 0 THEN 'untested' WHEN 1 THEN 'testing'
-    WHEN 2 THEN 'validated' ELSE 'invalidated' END,
-  riskiness_score: (i % 10) + 1
+    WHEN 0 THEN 'untested'
+    WHEN 1 THEN 'testing'
+    WHEN 2 THEN 'validated'
+    ELSE 'invalidated'
+  END,
+  riskiness_score: (i % 10) + 1,
+  confidence: (i % 10) + 1
 })
 CREATE (o)-[:OWNS_PRODUCT]->(p)
 CREATE (p)-[:SERVES_SEGMENT]->(cs)
 CREATE (p)-[:HAS_ASSUMPTION]->(a);
 
+// Profile HC-01
+// (same queries as with previous case‚ run unscoped then scoped)
 
-// Profile HC-01 at ~1,000 nodes 
-PROFILE MATCH (p:Product) WHERE NOT (p)-[:SERVES_SEGMENT]->(:CustomerSegment) AND NOT (p)-[:VARIANT_OF]->() RETURN p.name AS product, 'HC-01' AS violation, 'Product has no customer segment' AS description;
 
-//Scale to 5,000 nodes
+// ============================================================
+// ~5000 total nodes
+// ============================================================
 
 UNWIND range(251, 1250) AS i
-CREATE (o:Organization:IndependentContinuant:OrgDomain {
-  name: 'SyntheticOrg_' + toString(i), type: 'synthetic'
+CREATE (o:Organization:IndependentContinuant {
+  name: 'SyntheticOrg_' + toString(i),
+  type: 'synthetic',
+  stage: 'growth'
 })
-CREATE (p:Product:IndependentContinuant:ProductTech {
+CREATE (p:Product:IndependentContinuant {
   name: 'SyntheticProduct_' + toString(i),
-  type: 'synthetic', lifecycle_stage: 'growth'
+  type: 'synthetic',
+  lifecycle_stage: 'growth'
 })
-CREATE (cs:CustomerSegment:IndependentContinuant:MarketCustomer {
-  name: 'SyntheticSegment_' + toString(i), size: i * 100
+CREATE (cs:CustomerSegment:IndependentContinuant {
+  name: 'SyntheticSegment_' + toString(i),
+  size: i * 100,
+  willingness_to_pay: i * 50
 })
-CREATE (a:Assumption:DependentContinuant:RiskIntelligence {
+CREATE (a:Assumption:DependentContinuant {
   statement: 'SyntheticAssumption_' + toString(i),
   assumption_type: CASE (i % 5)
-    WHEN 0 THEN 'desirability' WHEN 1 THEN 'feasibility'
-    WHEN 2 THEN 'viability'    WHEN 3 THEN 'scalability'
-    ELSE 'sustainability' END,
+    WHEN 0 THEN 'desirability'
+    WHEN 1 THEN 'feasibility'
+    WHEN 2 THEN 'viability'
+    WHEN 3 THEN 'scalability'
+    ELSE 'sustainability'
+  END,
   validation_status: CASE (i % 4)
-    WHEN 0 THEN 'untested' WHEN 1 THEN 'testing'
-    WHEN 2 THEN 'validated' ELSE 'invalidated' END,
-  riskiness_score: (i % 10) + 1
+    WHEN 0 THEN 'untested'
+    WHEN 1 THEN 'testing'
+    WHEN 2 THEN 'validated'
+    ELSE 'invalidated'
+  END,
+  riskiness_score: (i % 10) + 1,
+  confidence: (i % 10) + 1
 })
 CREATE (o)-[:OWNS_PRODUCT]->(p)
 CREATE (p)-[:SERVES_SEGMENT]->(cs)
 CREATE (p)-[:HAS_ASSUMPTION]->(a);
 
-// Profile HC-01 at ~5,000 nodes 
-PROFILE MATCH (p:Product) WHERE NOT (p)-[:SERVES_SEGMENT]->(:CustomerSegment) AND NOT (p)-[:VARIANT_OF]->() RETURN p.name AS product, 'HC-01' AS violation, 'Product has no customer segment' AS description;
+// Profile HC-01 
+// (same queries as previous ‚ run unscoped then scoped)
 
-PROFILE MATCH (p:Product) WHERE p.name IN [ 'Terraform', 'Terraform OSS', 'Terraform Cloud', 'Vault', 'Vault OSS','Vault Enterprise', 'Consul', 'Nomad' ] AND NOT (p)-[:SERVES_SEGMENT]->(:CustomerSegment) AND NOT (p)-[:VARIANT_OF]->() RETURN p.name AS product, 'HC-01' AS violation, 'Product has no customer segment' ASdescription;
+
+
+// ============================================================
+// VERIFICATION QUERIES
+// Run these after each scale to confirm node counts
+// ============================================================
+
+// Total node count:
+// MATCH (n) RETURN count(n) AS total_nodes;
+
+// Breakdown by type:
+// MATCH (n) RETURN labels(n)[0] AS label, count(n) AS count
+// ORDER BY count DESC;
+
+// Confirm synthetic products all have segments (no HC-01 violations):
+// MATCH (p:Product {type:'synthetic'})
+// WHERE NOT (p)-[:SERVES_SEGMENT]->(:CustomerSegment)
+// RETURN count(p) AS synthetic_products_without_segment;
+// Expected result: 0
+
+// Confirm assumption types are all valid (no HC-12 violations):
+// MATCH (a:Assumption)
+// WHERE a.statement STARTS WITH 'SyntheticAssumption'
+// AND NOT a.assumption_type IN
+//   ['desirability','feasibility','viability','scalability','sustainability']
+// RETURN count(a) AS invalid_assumption_types;
+// Expected result: 0
+
+// ============================================================
+// CLEANUP‚ run this to remove all synthetic nodes
+// and return to the base HashiCorp graph
+// ============================================================
+
+// MATCH (n)
+// WHERE n.type = 'synthetic'
+//    OR (n:Organization AND n.name STARTS WITH 'SyntheticOrg')
+//    OR (n:Product AND n.name STARTS WITH 'SyntheticProduct')
+//    OR (n:CustomerSegment AND n.name STARTS WITH 'SyntheticSegment')
+//    OR (n:Assumption AND n.statement STARTS WITH 'SyntheticAssumption')
+// DETACH DELETE n;
+
