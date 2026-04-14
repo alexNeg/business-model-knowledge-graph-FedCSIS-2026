@@ -1,4 +1,8 @@
-// Constraint validation 
+// ============================================================
+// INDEX EFFECTIVENESS COMPARISON — run this section once only,
+// before applying the full index suite from the indexes file.
+// Steps 2–5 are a self-contained before/after measurement.
+// ============================================================
 
 // HC-01: Product without segment (1 hop) 
 PROFILE MATCH (p:Product) WHERE NOT (p)-[:SERVES_SEGMENT]->(:CustomerSegment) AND NOT (p)-[:VARIANT_OF]->() RETURN p.name AS product, 'HC-01' AS violation, 'Product has no customer segment' AS description;
@@ -53,7 +57,7 @@ PROFILE MATCH(a:Assumption)-[:CONTINGENT_ON]->(w:ChangeWave) <-[:DRIVEN_BY_WAVE]
 PROFILE MATCH (a:Assumption) WHERE a.assumption_type = 'sustainability' AND a.validation_status IN ['untested','testing'] AND a.riskiness_score > 6 RETURN a.statement, a.riskiness_score ORDER BY a.riskiness_score DESC;
 
 // Step 3: recreate the index 
-CREATE INDEX assumption_risk FOR (a:Assumption) ON (a.assumption_type,a.validation_status, a.riskiness_score);
+CREATE INDEX assumption_risk IF NOT EXISTS FOR FOR (a:Assumption) ON (a.assumption_type,a.validation_status, a.riskiness_score);
 
 // Step 4: wait for index to populate 
 CALL db.awaitIndexes(30);
