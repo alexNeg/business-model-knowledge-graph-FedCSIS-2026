@@ -1,0 +1,110 @@
+//Synthetic scale-up for the Scalability section
+
+UNWIND range(1, 100) AS i
+CREATE (o:Organization:IndependentContinuant:OrgDomain {
+  name: 'SyntheticOrg_' + toString(i),
+  type: 'synthetic'
+})
+CREATE (p:Product:IndependentContinuant:ProductTech {
+  name: 'SyntheticProduct_' + toString(i),
+  type: 'synthetic',
+  lifecycle_stage: 'growth'
+})
+CREATE (cs:CustomerSegment:IndependentContinuant:MarketCustomer {
+  name: 'SyntheticSegment_' + toString(i),
+  size: i * 100
+})
+CREATE (a:Assumption:DependentContinuant:RiskIntelligence {
+  statement: 'SyntheticAssumption_' + toString(i),
+  assumption_type: CASE (i % 5)
+    WHEN 0 THEN 'desirability'
+    WHEN 1 THEN 'feasibility'
+    WHEN 2 THEN 'viability'
+    WHEN 3 THEN 'scalability'
+    ELSE 'sustainability' END,
+  validation_status: CASE (i % 4)
+    WHEN 0 THEN 'untested'
+    WHEN 1 THEN 'testing'
+    WHEN 2 THEN 'validated'
+    ELSE 'invalidated' END,
+  riskiness_score: (i % 10) + 1
+})
+CREATE (o)-[:OWNS_PRODUCT]->(p)
+CREATE (p)-[:SERVES_SEGMENT]->(cs)
+CREATE (p)-[:HAS_ASSUMPTION]->(a);
+
+// Profile HC-01 at ~500 synthetic nodes
+// (HashiCorp base 121 + 100 orgs * ~4 nodes = ~521 nodes)
+PROFILE
+MATCH (p:Product)
+WHERE NOT (p)-[:SERVES_SEGMENT]->(:CustomerSegment)
+AND NOT (p)-[:VARIANT_OF]->()
+RETURN p.name AS product,
+       'HC-01' AS violation,
+       'Product has no customer segment' AS description;
+
+CALL db.clearQueryCaches();
+// Scale to 1,000 nodes — run the generator again with a different range
+
+UNWIND range(101, 250) AS i
+CREATE (o:Organization:IndependentContinuant:OrgDomain {
+  name: 'SyntheticOrg_' + toString(i), type: 'synthetic'
+})
+CREATE (p:Product:IndependentContinuant:ProductTech {
+  name: 'SyntheticProduct_' + toString(i),
+  type: 'synthetic', lifecycle_stage: 'growth'
+})
+CREATE (cs:CustomerSegment:IndependentContinuant:MarketCustomer {
+  name: 'SyntheticSegment_' + toString(i), size: i * 100
+})
+CREATE (a:Assumption:DependentContinuant:RiskIntelligence {
+  statement: 'SyntheticAssumption_' + toString(i),
+  assumption_type: CASE (i % 5)
+    WHEN 0 THEN 'desirability' WHEN 1 THEN 'feasibility'
+    WHEN 2 THEN 'viability'    WHEN 3 THEN 'scalability'
+    ELSE 'sustainability' END,
+  validation_status: CASE (i % 4)
+    WHEN 0 THEN 'untested' WHEN 1 THEN 'testing'
+    WHEN 2 THEN 'validated' ELSE 'invalidated' END,
+  riskiness_score: (i % 10) + 1
+})
+CREATE (o)-[:OWNS_PRODUCT]->(p)
+CREATE (p)-[:SERVES_SEGMENT]->(cs)
+CREATE (p)-[:HAS_ASSUMPTION]->(a);
+
+
+// Profile HC-01 at ~1,000 nodes 
+PROFILE MATCH (p:Product) WHERE NOT (p)-[:SERVES_SEGMENT]->(:CustomerSegment) AND NOT (p)-[:VARIANT_OF]->() RETURN p.name AS product, 'HC-01' AS violation, 'Product has no customer segment' AS description;
+
+//Scale to 5,000 nodes
+
+UNWIND range(251, 1250) AS i
+CREATE (o:Organization:IndependentContinuant:OrgDomain {
+  name: 'SyntheticOrg_' + toString(i), type: 'synthetic'
+})
+CREATE (p:Product:IndependentContinuant:ProductTech {
+  name: 'SyntheticProduct_' + toString(i),
+  type: 'synthetic', lifecycle_stage: 'growth'
+})
+CREATE (cs:CustomerSegment:IndependentContinuant:MarketCustomer {
+  name: 'SyntheticSegment_' + toString(i), size: i * 100
+})
+CREATE (a:Assumption:DependentContinuant:RiskIntelligence {
+  statement: 'SyntheticAssumption_' + toString(i),
+  assumption_type: CASE (i % 5)
+    WHEN 0 THEN 'desirability' WHEN 1 THEN 'feasibility'
+    WHEN 2 THEN 'viability'    WHEN 3 THEN 'scalability'
+    ELSE 'sustainability' END,
+  validation_status: CASE (i % 4)
+    WHEN 0 THEN 'untested' WHEN 1 THEN 'testing'
+    WHEN 2 THEN 'validated' ELSE 'invalidated' END,
+  riskiness_score: (i % 10) + 1
+})
+CREATE (o)-[:OWNS_PRODUCT]->(p)
+CREATE (p)-[:SERVES_SEGMENT]->(cs)
+CREATE (p)-[:HAS_ASSUMPTION]->(a);
+
+// Profile HC-01 at ~5,000 nodes 
+PROFILE MATCH (p:Product) WHERE NOT (p)-[:SERVES_SEGMENT]->(:CustomerSegment) AND NOT (p)-[:VARIANT_OF]->() RETURN p.name AS product, 'HC-01' AS violation, 'Product has no customer segment' AS description;
+
+PROFILE MATCH (p:Product) WHERE p.name IN [ 'Terraform', 'Terraform OSS', 'Terraform Cloud', 'Vault', 'Vault OSS','Vault Enterprise', 'Consul', 'Nomad' ] AND NOT (p)-[:SERVES_SEGMENT]->(:CustomerSegment) AND NOT (p)-[:VARIANT_OF]->() RETURN p.name AS product, 'HC-01' AS violation, 'Product has no customer segment' ASdescription;
