@@ -4,13 +4,6 @@
 // Schema version: Dynamic Business Model Innovation Framework
 // ============================================================
 
-// INDEXES 
-CREATE INDEX product_type IF NOT EXISTS FOR (p:Product) ON (p.type, p.lifecycle_stage);
-CREATE INDEX assumption_risk IF NOT EXISTS FOR (a:Assumption) ON (a.assumption_type, a.validation_status, a.riskiness_score);
-CREATE INDEX market_opp_stage IF NOT EXISTS FOR (mo:MarketOpportunity) ON (mo.stage);
-CREATE INDEX readiness IF NOT EXISTS FOR (rl:ReadinessLevel) ON (rl.framework, rl.level);
-CREATE INDEX investor_type IF NOT EXISTS FOR (i:Investor) ON (i.investor_type);
-CREATE INDEX segment_wtp IF NOT EXISTS FOR (cs:CustomerSegment) ON (cs.willingness_to_pay);
 
 // CONSTRAINTS 
 CREATE CONSTRAINT unique_product_name IF NOT EXISTS FOR (p:Product) REQUIRE p.name IS UNIQUE;
