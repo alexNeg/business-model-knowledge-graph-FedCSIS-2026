@@ -1,0 +1,4 @@
+// CONSTRAINTS 
+CREATE CONSTRAINT unique_product_name IF NOT EXISTS FOR (p:Product) REQUIRE p.name IS UNIQUE;
+CREATE CONSTRAINT unique_org_name IF NOT EXISTS FOR (o:Organization) REQUIRE o.name IS UNIQUE;
+CREATE CONSTRAINT unique_market_name IF NOT EXISTS FOR (m:Market) REQUIRE m.name IS UNIQUE;
