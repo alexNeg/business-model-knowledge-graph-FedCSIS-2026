@@ -1,0 +1,62 @@
+// Constraint validation 
+
+// HC-01: Product without segment (1 hop) 
+PROFILE MATCH (p:Product) WHERE NOT (p)-[:SERVES_SEGMENT]->(:CustomerSegment) AND NOT (p)-[:VARIANT_OF]->() RETURN p.name AS product, 'HC-01' AS violation, 'Product has no customer segment' AS description;
+
+// HC-12: Invalid assumption_type (1 hop, tests composite index) 
+PROFILE MATCH (a:Assumption) WHERE NOT a.assumption_type IN ['desirability','feasibility','viability','scalability','sustainability'] RETURN a.statement AS entity,a.assumption_type AS invalid_value, 'HC-12' AS violation;
+
+
+// HC-17: IP jurisdiction gap (3 hops) 
+PROFILE MATCH (p:Product)-[:TARGETS_MARKET]->(m:Market) MATCH(p)-[:HAS_IP]->(ip:IPAsset) WHERE NOT EXISTS { MATCH (ip)-[:GOVERNED_BY]->(rf:RegulatoryFramework)WHERE rf.jurisdiction IN m.geography } RETURN ip.name AS unprotected_ip, m.name AS market, m.geography AS gap_jurisdictions, 'HC-17' AS violation;
+
+// SC-16: Fork risk auto-trigger (2 hops) 
+PROFILE MATCH (p:Product)-[:HAS_COMMUNITY_HEALTH]->(h:CommunityHealthMetric) WHERE h.fork_risk_score > 7 RETURN p.name AS product, h.fork_risk_score AS fork_risk, 'SC-16: auto-generate community fork risk node' AS action;
+
+// Lean Canvas generation (2-3 hops)
+PROFILE
+MATCH (f:Framework {name:'Lean Canvas'})<-[:BLOCK_BELONGS_TO]-(bb:BuildingBlock)
+MATCH (p:Product {name:'Terraform'})
+CALL {
+  WITH bb, p
+  MATCH (p)-[:SERVES_SEGMENT]->(cs)-[:HAS_STAKEHOLDER]->(st)
+        -[:EXPERIENCES_PAIN]->(pp:PainPoint)
+  WHERE bb.name = 'Problem'
+  RETURN bb.name AS block, collect(DISTINCT pp.description) AS content
+
+  UNION ALL
+
+  WITH bb, p
+  MATCH (p)-[:HAS_FEATURE]->(feat)-[:ADDRESSES_PAIN]->(pp)
+  WHERE bb.name = 'Solution'
+  RETURN bb.name AS block, collect(DISTINCT feat.name) AS content
+
+  UNION ALL
+
+  WITH bb, p
+  MATCH (p)-[:MEASURED_BY]->(m:Metric)
+  WHERE bb.name = 'Key Metrics'
+  RETURN bb.name AS block, collect(DISTINCT m.name) AS content
+}
+RETURN block, content;
+
+// Cross-framework consistency (4 hops) 
+PROFILE MATCH (cs:CustomerSegment)<-[:SERVES_SEGMENT]-(p:Product) WHERE NOT EXISTS { MATCH (cs)<-[:PROPOSES_VALUE_TO]-(vp:ValueProposition) -[:RESOLVES]->(pp:PainPoint) <-[:EXPERIENCES_PAIN]-(st:Stakeholder) <-[:HAS_STAKEHOLDER]-(cs) } RETURN cs.name AS orphaned_segment, 'No VP resolves segment pains' AS inconsistency;
+
+// Gap detection batch (1-2 hops, 3 checks in one query) 
+PROFILE MATCH (cs:CustomerSegment) WHERE NOT (cs)-[:HAS_STAKEHOLDER]->() RETURN cs.name AS entity, 'No stakeholders' AS gap UNION ALL MATCH(pm:PricingModel) WHERE NOT (pm)-[:HAS_ASSUMPTION]->() RETURN pm.type AS entity, 'No pricing assumptions' AS gap UNION ALL MATCH (sl:SustainabilityLayer) WHERE NOT (sl)<-[:RELATES_TO_SUSTAINABILITY]-(:Assumption) RETURN sl.type AS entity, 'No sustainability assumption linked'AS gap;
+
+// CONTINGENT_ON chain traversal (2 hops) 
+PROFILE MATCH(a:Assumption)-[:CONTINGENT_ON]->(w:ChangeWave) <-[:DRIVEN_BY_WAVE]-(m:Market) RETURN w.name AS wave, a.assumption_type AS type, a.validation_status AS status, m.name AS market, a.riskiness_score AS risk ORDER BY a.riskiness_score DESC;
+
+// Step 2: profile WITHOUT index - record db hits and ms 
+PROFILE MATCH (a:Assumption) WHERE a.assumption_type = 'sustainability' AND a.validation_status IN ['untested','testing'] AND a.riskiness_score > 6 RETURN a.statement, a.riskiness_score ORDER BY a.riskiness_score DESC;
+
+// Step 3: recreate the index 
+CREATE INDEX assumption_risk FOR (a:Assumption) ON (a.assumption_type,a.validation_status, a.riskiness_score);
+
+// Step 4: wait for index to populate 
+CALL db.awaitIndexes(30);
+
+// Step 5: profile WITH index - record db hits and ms 
+PROFILE MATCH (a:Assumption) WHERE a.assumption_type ='sustainability' AND a.validation_status IN ['untested','testing'] AND a.riskiness_score > 6 RETURN a.statement,a.riskiness_score ORDER BY a.riskiness_score DESC;
