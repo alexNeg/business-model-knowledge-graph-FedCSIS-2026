@@ -109,7 +109,7 @@ CREATE (sentinelIP:IPAsset:GenericallydependentContinuant {
   type: 'copyright',
   status: 'active',
   jurisdiction: ['US','EU'],
-  description: 'Sentinel Policy-as-Code engine ‚Äî enterprise only'
+  description: 'Sentinel Policy-as-Code engine ‚ enterprise only'
 });
 CREATE (vaultTransitIP:IPAsset:GenericallydependentContinuant {
   name: 'Vault Transit Encryption',
@@ -216,7 +216,7 @@ MATCH (oss:Product {name:'Vault OSS'}), (p:Product {name:'Vault'})
 MATCH (e:Product {name:'Vault Enterprise'}), (p:Product {name:'Vault'})
   CREATE (e)-[:VARIANT_OF]->(p);
 
-// Organization OWNS_PRODUCT (parent nodes only ‚Äî variants inherit via VARIANT_OF)
+// Organization OWNS_PRODUCT (parent nodes only ‚variants inherit via VARIANT_OF)
 MATCH (o:Organization {name:'HashiCorp'}), (p:Product)
 WHERE p.name IN ['Terraform','Vault','Consul','Nomad']
 CREATE (o)-[:OWNS_PRODUCT]->(p);
@@ -584,7 +584,7 @@ CREATE (tfContrib:ContributorJourney:Occurrent { stages:['awareness','first_cont
 MATCH (p:Product {name:'Terraform OSS'}), (j:ContributorJourney) CREATE (p)-[:HAS_CONTRIBUTOR_FUNNEL]->(j);
 
 CREATE (awsProvider:DownstreamDependency:IndependentContinuant { project_name:'AWS Terraform Provider', dependency_type:'direct', strategic_importance:'critical', communication_channel:'GitHub Issues + quarterly sync' });
-CREATE (openTofu:DownstreamDependency:IndependentContinuant { project_name:'OpenTofu (CNCF fork)', dependency_type:'fork', strategic_importance:'critical', communication_channel:'None ‚Äî adversarial relationship post-BSL', notes:'Launched Oct 2023; CNCF sandbox project; drop-in Terraform replacement' });
+CREATE (openTofu:DownstreamDependency:IndependentContinuant { project_name:'OpenTofu (CNCF fork)', dependency_type:'fork', strategic_importance:'critical', communication_channel:'None ‚ adversarial relationship post-BSL', notes:'Launched Oct 2023; CNCF sandbox project; drop-in Terraform replacement' });
 CREATE (k8sOp:DownstreamDependency:IndependentContinuant { project_name:'Terraform Controller for Kubernetes', dependency_type:'transitive', strategic_importance:'medium', communication_channel:'GitHub' });
 MATCH (p:Product {name:'Terraform OSS'}), (d:DownstreamDependency) CREATE (p)-[:DEPENDED_ON_BY]->(d);
 
@@ -593,18 +593,18 @@ CREATE (corpSteward:GovernanceModel:GenericallydependentContinuant { type:'corpo
 MATCH (o:Organization {name:'HashiCorp'}), (s:OpenSourceStrategy) CREATE (o)-[:FOLLOWS_OSS_STRATEGY]->(s);
 MATCH (s:OpenSourceStrategy), (g:GovernanceModel) CREATE (s)-[:GOVERNED_BY_MODEL]->(g);
 
-CREATE (hashiConf22:CommunityEngagement:Occurrent { type:'event', sentiment_score:0.82, retention_rate:0.71, notes:'HashiConf 2022 ‚Äî 4000+ attendees; major Terraform 1.3 and Vault 1.12 announcements' });
+CREATE (hashiConf22:CommunityEngagement:Occurrent { type:'event', sentiment_score:0.82, retention_rate:0.71, notes:'HashiConf 2022 ‚ 4000+ attendees; major Terraform 1.3 and Vault 1.12 announcements' });
 MATCH (o:Organization {name:'HashiCorp'}), (e:CommunityEngagement) CREATE (o)-[:ENGAGES_COMMUNITY]->(e);
 
 // LAYER 11 - METRICS
 
 CREATE (downloadsM:Metric:DependentContinuant { name:'Terraform Total Downloads', category:'community', unit:'count', target_value:120000000, current_value:100000000, frequency:'cumulative' });
 CREATE (arrM:Metric:DependentContinuant { name:'Annual Recurring Revenue', category:'financial', unit:'USD', target_value:400000000, current_value:320000000, frequency:'annual' });
-CREATE (npsM:Metric:DependentContinuant { name:'Net Promoter Score ‚Äî Terraform Cloud', category:'product_health', unit:'score', target_value:75, current_value:68, frequency:'quarterly' });
+CREATE (npsM:Metric:DependentContinuant { name:'Net Promoter Score ‚ Terraform Cloud', category:'product_health', unit:'score', target_value:75, current_value:68, frequency:'quarterly' });
 CREATE (convM:Metric:DependentContinuant { name:'OSS to Paid Conversion Rate', category:'AARRR', unit:'ratio', target_value:0.05, current_value:0.038, frequency:'monthly' });
 MATCH (p:Product {name:'Terraform'}), (m:Metric {name:'Terraform Total Downloads'}) CREATE (p)-[:MEASURED_BY]->(m);
 MATCH (o:Organization {name:'HashiCorp'}), (m:Metric {name:'Annual Recurring Revenue'}) CREATE (o)-[:MEASURED_BY]->(m);
-MATCH (p:Product {name:'Terraform Cloud'}), (m:Metric) WHERE m.name IN ['Net Promoter Score ‚Äî Terraform Cloud','OSS to Paid Conversion Rate'] CREATE (p)-[:MEASURED_BY]->(m);
+MATCH (p:Product {name:'Terraform Cloud'}), (m:Metric) WHERE m.name IN ['Net Promoter Score ‚ Terraform Cloud','OSS to Paid Conversion Rate'] CREATE (p)-[:MEASURED_BY]->(m);
 
 // LAYER 12 - META-FRAMWORK
 
