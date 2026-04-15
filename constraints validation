@@ -57,7 +57,7 @@ PROFILE MATCH(a:Assumption)-[:CONTINGENT_ON]->(w:ChangeWave) <-[:DRIVEN_BY_WAVE]
 PROFILE MATCH (a:Assumption) WHERE a.assumption_type = 'sustainability' AND a.validation_status IN ['untested','testing'] AND a.riskiness_score > 6 RETURN a.statement, a.riskiness_score ORDER BY a.riskiness_score DESC;
 
 // Step 3: recreate the index 
-CREATE INDEX assumption_risk IF NOT EXISTS FOR FOR (a:Assumption) ON (a.assumption_type,a.validation_status, a.riskiness_score);
+CREATE INDEX assumption_risk IF NOT EXISTS FOR (a:Assumption) ON (a.assumption_type,a.validation_status, a.riskiness_score);
 
 // Step 4: wait for index to populate 
 CALL db.awaitIndexes(30);
