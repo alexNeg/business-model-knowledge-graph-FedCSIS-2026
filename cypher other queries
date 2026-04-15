@@ -1,0 +1,75 @@
+// Define domain membership inline, count nodes and relationships per domain
+WITH {
+  Organisation         : ['Organization','Team','Competitor','Partner','Partnership'],
+  Stakeholders         : ['Stakeholder','User','Customer','DecisionMakingUnit',
+                          'EconomicBuyer','TechnicalBuyer','Champion','Investor'],
+  ProductTechnology    : ['Product','Feature','TechStack','IPAsset',
+                          'License','DualLicensing','ReadinessLevel'],
+  MarketCustomer       : ['Market','MarketOpportunity','MarketAccessibility',
+                          'CustomerSegment','PainPoint','Benefit',
+                          'JobToBeDone','CustomerJourney','ChangeWave'],
+  ValueRevenue         : ['ValueProposition','PricingModel','RevenueStream',
+                          'CostStructure','UnitEconomics','Investment','FundingRound'],
+  ChannelActivity      : ['Channel','KeyActivity','KeyResource','CommunityEngagement'],
+  MetricsKPIs          : ['Metric','MetricMeasurement','AARRRStage','CommunityHealthMetric'],
+  RiskHypothesis       : ['Assumption','Hypothesis','Experiment','Risk'],
+  ComplianceSecurity   : ['RegulatoryFramework','ComplianceStrategy','SustainabilityLayer',
+                          'CircularStrategy','CybersecurityProfile',
+                          'OpenSourceStrategy','GovernanceModel'],
+  OpenInnovation       : ['ContributorJourney','DownstreamDependency'],
+  FrameworkMeta        : ['Framework','BuildingBlock','StrategyPhase']
+} AS domainMap
+
+UNWIND keys(domainMap) AS domainKey
+WITH domainKey, domainMap[domainKey] AS entityTypes
+
+// Count nodes in this domain
+MATCH (n)
+WHERE any(l IN labels(n) WHERE l IN entityTypes)
+WITH domainKey, entityTypes, count(n) AS nodeCount
+
+// Count relationships where at least one endpoint is in this domain
+MATCH ()-[r]-()
+WHERE any(l IN labels(startNode(r)) WHERE l IN entityTypes)
+   OR any(l IN labels(endNode(r))   WHERE l IN entityTypes)
+WITH domainKey, nodeCount, count(DISTINCT r) AS relCount
+
+// Map internal keys back to display labels for the table
+WITH domainKey, nodeCount, relCount,
+  CASE domainKey
+    WHEN 'Organisation'        THEN 'Organisation (incl. teams, partners)'
+    WHEN 'Stakeholders'        THEN 'Stakeholders'
+    WHEN 'ProductTechnology'   THEN 'Product & Technology'
+    WHEN 'MarketCustomer'      THEN 'Market & Customer'
+    WHEN 'ValueRevenue'        THEN 'Value & Revenue'
+    WHEN 'ChannelActivity'     THEN 'Channel & Activity'
+    WHEN 'MetricsKPIs'         THEN 'Metrics & KPIs'
+    WHEN 'RiskHypothesis'      THEN 'Risk & Hypothesis'
+    WHEN 'ComplianceSecurity'  THEN 'Compliance & Security'
+    WHEN 'OpenInnovation'      THEN 'Open Innovation'
+    WHEN 'FrameworkMeta'       THEN 'Framework Meta'
+  END AS displayLabel,
+  CASE domainKey
+    WHEN 'Organisation'        THEN 1
+    WHEN 'Stakeholders'        THEN 2
+    WHEN 'ProductTechnology'   THEN 3
+    WHEN 'MarketCustomer'      THEN 4
+    WHEN 'ValueRevenue'        THEN 5
+    WHEN 'ChannelActivity'     THEN 6
+    WHEN 'MetricsKPIs'         THEN 7
+    WHEN 'RiskHypothesis'      THEN 8
+    WHEN 'ComplianceSecurity'  THEN 9
+    WHEN 'OpenInnovation'      THEN 10
+    WHEN 'FrameworkMeta'       THEN 11
+  END AS sortOrder
+
+RETURN displayLabel AS Domain, nodeCount AS Nodes, relCount AS Relationships
+ORDER BY sortOrder
+
+UNION ALL
+
+// Totals row
+MATCH (n) WITH count(n) AS totalNodes
+MATCH ()-[r]-() WITH totalNodes, count(DISTINCT r) AS totalRels
+RETURN 'Total' AS Domain, totalNodes AS Nodes, totalRels AS Relationships
+
