@@ -221,13 +221,13 @@ The file contains three sequential tiers. Run them one at a time in Neo4j Browse
 or Cypher shell, profiling HC-01 between each tier:
 
 **Tier 1 — approximately 500 total nodes:**
-Run the first `UNWIND` block (range 1–85).
+Run the first `UNWIND` block (range 1–100).
 
 **Tier 2 — approximately 1,000 total nodes:**
-Run the second `UNWIND` block (range 86–210) against the same database.
+Run the second `UNWIND` block (range 101–250) against the same database.
 
 **Tier 3 — approximately 5,000 total nodes:**
-Run the third `UNWIND` block (range 211–1210) against the same database.
+Run the third `UNWIND` block (range 251–1250) against the same database.
 
 After each tier, profile HC-01 in two modes:
 
